@@ -4,9 +4,18 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tarea;
+use App\Memento\TareaCaretaker;
 
 class TareaController extends Controller
 {
+    protected $caretaker;
+
+    public function __construct()
+    {
+        // Inicializamos el Caretaker que manejará los Mementos
+        $this->caretaker = new TareaCaretaker();
+    }
+
     public function index()
     {
         // Obtener todas las tareas de la base de datos
@@ -29,8 +38,9 @@ class TareaController extends Controller
     {
         $tarea = Tarea::findOrFail($id);
 
-        // Guardar el estado actual en la sesión, usando el ID de la tarea
-        session(['undo_estado_' . $tarea->id => $tarea->estado]);
+        // Guardar el estado actual de la tarea en un Memento
+        $memento = $tarea->saveStateToMemento();
+        $this->caretaker->addMemento($id, $memento);
 
         // Cambiar el estado de la tarea
         $tarea->estado = $request->input('estado');
@@ -41,19 +51,18 @@ class TareaController extends Controller
 
     public function deshacerCambio($id)
     {
-        // Recuperar el estado anterior de la tarea desde la sesión
-        $estadoAnterior = session('undo_estado_' . $id);
+        // Recuperar el Memento de la tarea
+        $memento = $this->caretaker->getMemento($id);
 
-        if ($estadoAnterior) {
-            // Restaurar el estado de la tarea
+        if ($memento) {
+            // Restaurar el estado desde el Memento
             $tarea = Tarea::findOrFail($id);
-            $tarea->estado = $estadoAnterior;
-            $tarea->save();
+            $tarea->restoreStateFromMemento($memento);
 
-            // Limpiar la sesión después de restaurar el estado
-            session()->forget('undo_estado_' . $id);
+            // Limpiar el Memento después de restaurar el estado
+            $this->caretaker->clearMemento($id);
 
-            return redirect()->back()->with('message', 'Estado restaurado a: ' . $estadoAnterior);
+            return redirect()->back()->with('message', 'Estado restaurado a: ' . $tarea->estado);
         }
 
         return redirect()->back()->with('error', 'No se puede deshacer el cambio.');

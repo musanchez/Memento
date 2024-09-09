@@ -60,7 +60,7 @@
                                 </form>
 
                                 <!-- Botón de deshacer solo si existe un estado anterior para esta tarea -->
-                                @if(session('undo_estado_' . $tarea->id))
+                                @if(session('tarea_memento_' . $tarea->id))
                                     <form method="POST" action="/tarea/{{ $tarea->id }}/deshacer" class="d-inline-block">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-warning">Deshacer</button>

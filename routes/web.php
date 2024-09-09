@@ -18,3 +18,4 @@ Route::get('/', [TareaController::class, 'index']); // Ruta principal
 Route::post('/tarea/crear', [TareaController::class, 'crearTarea']); // Ruta para crear una tarea
 Route::post('/tarea/{id}/cambiar-estado', [TareaController::class, 'cambiarEstado']); // Ruta para cambiar el estado de una tarea
 Route::post('/tarea/{id}/deshacer', [TareaController::class, 'deshacerCambio']); // Ruta para deshacer el último cambio en una tarea específica
+
